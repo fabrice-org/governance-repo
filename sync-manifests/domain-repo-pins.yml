@@ -1,0 +1,8 @@
+# Approved governance pins for downstream repos
+
+version: 1
+approved_sources:
+  - path: policy/template-versioning-policy.md
+    target: domain-repo
+  - path: policy/domain-repo-policy.md
+    target: domain-repo

@@ -1,0 +1,5 @@
+# Governance repo ownership
+
+/policy/ @fabrice-org/governance-owners
+/rulesets/ @fabrice-org/platform-admins
+/sync-manifests/ @fabrice-org/governance-owners @fabrice-org/platform-admins
