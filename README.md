@@ -41,3 +41,27 @@ Domain repos consume approved content from this repo in one of two ways:
 - Configure org-level rulesets from this repo's baseline docs.
 - Apply CODEOWNERS and required-reviewer routing in domain repos.
 - Use this repo as the policy source, not the runtime execution location.
+
+
+## Architecture Diagram
+
+```mermaid
+flowchart LR
+	G[governance-repo\npolicy and approved versions]
+	O[GitHub org settings\nrulesets and policy controls]
+
+	D1[domain-repo\ndirect ownership]
+	D2[domain-repo-submodules\npinned governance content]
+	D3[domain-repo-synced-prs\npolicy sync PR workflow]
+
+	G -->|Policy source| D1
+	G -->|Submodule pin to approved commit| D2
+	G -->|Sync job opens PR with approved update| D3
+
+	O -->|Enforcement| D1
+	O -->|Enforcement| D2
+	O -->|Enforcement| D3
+
+	D2 -. Pin update requires review .-> G
+	D3 -. PR merge promotes approved change .-> G
+```
