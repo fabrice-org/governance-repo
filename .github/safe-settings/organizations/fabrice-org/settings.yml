@@ -1,0 +1,35 @@
+# These settings are synced to GitHub by https://probot.github.io/apps/settings/
+
+repository:
+  # A short description of the repository
+  description: to test safe settings
+
+  # Whether the repository is private
+  private: false
+
+  # Whether issues are enabled
+  has_issues: true
+
+  # Whether projects are enabled
+  has_projects: true
+
+  # Whether the wiki is enabled
+  has_wiki: true
+
+  # Whether downloads are enabled
+  has_downloads: true
+
+  # Updates the default branch for this repository
+  default_branch: main
+
+  # Whether to allow squash merges for pull requests
+  allow_squash_merge: true
+
+  # Whether to allow merge commits for pull requests
+  allow_merge_commit: true
+
+  # Whether to allow rebase merges for pull requests
+  allow_rebase_merge: true
+
+  # Whether to delete head branches when pull requests are merged
+  delete_branch_on_merge: true

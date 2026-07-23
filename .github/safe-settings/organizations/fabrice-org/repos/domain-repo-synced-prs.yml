@@ -1,0 +1,12 @@
+repository:
+  # A short description of the repository that will show up on GitHub
+  description: managed by safe-settings hub-sync test
+
+  # Whether issues are enabled
+  has_issues: true
+
+  # Whether projects are enabled
+  has_projects: true
+
+  # Whether the wiki is enabled
+  has_wiki: false

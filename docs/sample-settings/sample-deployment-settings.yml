@@ -1,0 +1,51 @@
+# This is a sample deployment settings file
+# See the documentation for more details on how to use this file
+
+# If no file is specified, the following repositories are excluded by default
+# restrictedRepos: ['admin', '.github', 'safe-settings']
+
+restrictedRepos:
+  exclude: 
+    - admin
+    - .github
+    - safe-settings
+    - admin-*
+  include:
+    - docs
+    - core-*
+
+configvalidators:
+  - plugin: collaborators
+    error: |
+      `Admin cannot be assigned to collaborators`
+    script: |
+      console.log(`baseConfig ${JSON.stringify(baseconfig)}`)
+      return baseconfig.permission != 'admin'
+
+overridevalidators:
+  - plugin: branches
+    error: |
+      `Branch protection required_approving_review_count cannot be overidden to a lower value`
+    script: |
+      console.log(`baseConfig ${JSON.stringify(baseconfig)}`)
+      console.log(`overrideConfig ${JSON.stringify(overrideconfig)}`)
+      if (baseconfig.protection.required_pull_request_reviews.required_approving_review_count && overrideconfig.protection.required_pull_request_reviews.required_approving_review_count ) {
+        return overrideconfig.protection.required_pull_request_reviews.required_approving_review_count >= baseconfig.protection.required_pull_request_reviews.required_approving_review_count
+      }
+      return true
+  - plugin: labels
+    error: |
+      Some error
+    script: |
+      return true
+
+# disable_plugins (optional) — disable safe-settings plugins at the deployment layer.
+# Each entry is either a plugin name (shorthand for target: all) or { plugin, target }.
+# target is one of: self | children | all (default: all).
+# Declared here, target: all strips the plugin from every level below for every repo.
+# See docs/README.md ("Disabling plugins") for the full strip matrix and limitations.
+#
+# disable_plugins:
+#   - plugin: rulesets       # disables rulesets everywhere
+#     target: all
+#   - milestones             # shorthand → { plugin: milestones, target: all }

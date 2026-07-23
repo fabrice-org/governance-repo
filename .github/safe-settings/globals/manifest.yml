@@ -1,0 +1,13 @@
+rules:
+  - name: global-defaults
+    # specify the target ORG(s)
+    targets:
+      - "*"
+    files:
+      - "*.yml"
+
+    ## mergeStrategy: merge | overwrite | preserve
+    # --------------------------------------------
+    # merge     = use a PR to sync files
+    # overwrite = sync all files to the target ORG(s) (no PR)
+    mergeStrategy: merge

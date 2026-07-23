@@ -1,0 +1,30 @@
+# Secrets — never commit
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+private-key*.pem
+.data/
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Logs
+*.log
+safe-settings.log
+hubSyncHandler.log
+
+# Build / coverage
+coverage/
+dist/
+.next/
+out/
+
+# OS / editor
+.DS_Store
+.vscode/
+.idea/
