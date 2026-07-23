@@ -1,4 +1,7 @@
-# 🛡️ GitHub Safe-Settings
+# Governance Repo
+This governance repo can be used by enterprises to manage governance accross multiple repos. It currently contains Safe Seeting and Github Issues Template access governance.
+
+## 🛡️ GitHub Safe-Settings
 
 [![Create a release](https://github.com/github/safe-settings/actions/workflows/create-release.yml/badge.svg)](https://github.com/github/safe-settings/actions/workflows/create-release.yml)
 [![License: ISC](https://img.shields.io/badge/License-ISC-blue.svg)](https://opensource.org/licenses/ISC)
