@@ -23,7 +23,13 @@ const mockRobot = {
   log: {
     info: jest.fn(), // Track info logs
     warn: jest.fn(), // Track warning logs
-    error: jest.fn() // Track error logs
+    error: jest.fn(), // Track error logs
+    debug: jest.fn(), // Track debug logs
+    trace: jest.fn(),
+    fatal: jest.fn(),
+    notice: jest.fn(),
+    // Prevent attachFileLogger from replacing these mocks (and writing a log file) during tests
+    __fileLoggerAttached: true
   },
   auth: jest.fn() // Mock authentication method
 }

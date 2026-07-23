@@ -17,7 +17,7 @@ yarn-error.log*
 *.log
 safe-settings.log
 hubSyncHandler.log
-
+reports/
 # Build / coverage
 coverage/
 dist/

@@ -4,16 +4,13 @@ const request = require('supertest');
 const express = require('express');
 
 const { setupRoutes } = require('../../../lib/routes');
-const axios = require('axios');
-jest.mock('axios');
 jest.mock('../../../lib/installationCache', () => ({
   getInstallations: jest.fn(),
   getOrgLogins: jest.fn(() => ['jetest99', 'jefeish-training']),
-  getLastFetchedAt: jest.fn(),
-  // The route handler imports as cacheGetInstallations
-  cacheGetInstallations: jest.fn()
+  getLastFetchedAt: jest.fn()
 }));
-const { cacheGetInstallations } = require('../../../lib/installationCache');
+// routes.js imports the `getInstallations` export (aliased locally as cacheGetInstallations)
+const { getInstallations } = require('../../../lib/installationCache');
 
 let app;
 let robot;
@@ -63,15 +60,15 @@ describe('GET /api/safe-settings/installation', () => {
       { id: 84980804, account: { login: 'jetest99', type: 'Organization' }, created_at: '2025-09-08T23:17:59.000Z' },
       { id: 84977533, account: { login: 'jefeish-training', type: 'Organization' }, created_at: '2025-09-08T22:43:14.000Z' }
     ];
-    cacheGetInstallations.mockResolvedValueOnce(mockInstallations);
+    getInstallations.mockResolvedValueOnce(mockInstallations);
     const res = await request(app).get('/api/safe-settings/installation');
-    // expect(res.statusCode).toBe(200);
+    expect(res.statusCode).toBe(200);
     expect(res.body.installations).toBeDefined();
     expect(res.body.installations.length).toBe(mockInstallations.length);
     expect(res.body.installations[0].account).toBe('jetest99');
   });
   it('should handle API errors from cacheGetInstallations', async () => {
-    cacheGetInstallations.mockRejectedValueOnce(new Error('API down'));
+    getInstallations.mockRejectedValueOnce(new Error('API down'));
     const res = await request(app).get('/api/safe-settings/installation');
     expect([500, 404]).toContain(res.statusCode);
   });
@@ -85,13 +82,11 @@ describe('GET /api/safe-settings/installation', () => {
 describe('GET /api/safe-settings/hub/content', () => {
 
   it('should return hub content', async () => {
-    axios.get.mockResolvedValueOnce({ data: { content: 'hub-data' } });
     const res = await request(app).get('/api/safe-settings/hub/content');
     expect([200, 404, 500]).toContain(res.statusCode);
     expect(res.body).toBeDefined();
   });
   it('should handle API errors', async () => {
-    axios.get.mockRejectedValueOnce(new Error('API down'));
     const res = await request(app).get('/api/safe-settings/hub/content');
     expect([500, 404]).toContain(res.statusCode);
   });
@@ -134,13 +129,16 @@ describe('POST /api/safe-settings/hub/import', () => {
     expect(res.body.error).toMatch(/Missing orgs/);
   });
   it('should process import with orgs', async () => {
-    axios.post.mockResolvedValueOnce({ data: { success: true } });
     const res = await request(app).post('/api/safe-settings/hub/import').send({ orgs: ['org1'] });
     expect([200, 201, 500]).toContain(res.statusCode);
   });
   it('should handle API errors', async () => {
-    axios.post.mockRejectedValueOnce(new Error('API down'));
+    const hubSyncHandler = require('../../../lib/hubSyncHandler');
+    jest.spyOn(hubSyncHandler, 'retrieveSettingsFromOrgs').mockRejectedValueOnce(new Error('API down'));
     const res = await request(app).post('/api/safe-settings/hub/import').send({ orgs: ['org1'] });
-    expect([500, 404]).toContain(res.statusCode);
+    // Route is designed to always return 200, surfacing failures as { ok: false }
+    expect(res.statusCode).toBe(200);
+    expect(res.body.ok).toBe(false);
+    expect(res.body.error).toMatch(/API down/);
   });
 });
