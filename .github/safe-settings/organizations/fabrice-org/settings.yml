@@ -2,7 +2,7 @@
 
 repository:
   # A short description of the repository
-  description: To demo governance such as safe settings
+  description: To demo governance such as safe settings and access control
 
   # Whether the repository is private
   private: false
