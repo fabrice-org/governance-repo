@@ -13,11 +13,17 @@ const { hubSyncHandler } = require('./lib/hubSyncHandler')
 
 let deploymentConfig
 
-module.exports = (robot, { getRouter }, Settings = require('./lib/settings')) => {
+module.exports = (robot, { getRouter } = {}, Settings = require('./lib/settings')) => {
   let appSlug = 'safe-settings'
 
-  // Initialize all routes (static UI + API) via centralized module
-  setupRoutes(robot, getRouter)
+  // Initialize all routes (static UI + API) via centralized module.
+  // getRouter is only provided when running as an HTTP server (`probot run`).
+  // In one-shot contexts like `full-sync` there is no router, so skip route setup.
+  if (typeof getRouter === 'function') {
+    setupRoutes(robot, getRouter)
+  } else {
+    robot.log.info('No HTTP router in this context (e.g. full-sync/CLI); skipping route setup')
+  }
 
   // Initialize installation cache (env-controlled prefetch)
   initCache(robot)
@@ -45,7 +51,7 @@ module.exports = (robot, { getRouter }, Settings = require('./lib/settings')) =>
     })
   }
 
-  async function syncAllSettings (nop, context, repo = context.repo(), ref) {
+  async function syncAllSettings (nop, context, repo = context.repo(), ref, baseRef, changedFiles) {
     robot.log.info(`Full sync started for ${repo.owner}/${repo.repo}${ref ? ` @ ${ref}` : ''} (nop=${nop})`)
     try {
       deploymentConfig = await loadYamlFileSystem()
