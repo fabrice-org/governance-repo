@@ -1,5 +1,49 @@
 # Governance Repo
-This governance repo can be used by enterprises to manage governance accross multiple repos. It currently contains Safe Seeting and Github Issues Template access governance.
+This governance repo can be used by enterprises to manage governance across multiple repos. It currently manages two domains: **Safe Settings** (repository and organization configuration) and **Access Control** (branch protection, required reviews, and review-ownership policy). The **Governance Layout** section below shows where each configuration lives.
+
+## 🗂️ Governance Layout
+
+Both domains are version-controlled here and changed through pull requests, but they are applied differently. The Safe-Settings app reads this repo (`ADMIN_REPO=governance-repo`) for the `fabrice-org` organization, rooted at `CONFIG_PATH=.github/safe-settings/organizations/fabrice-org`.
+
+### Safe Settings — repository & org configuration
+
+Repository and organization settings that the Safe-Settings GitHub App applies automatically (on merge to the default branch, and on demand via `npm run full-sync`).
+
+| What | Where |
+|---|---|
+| Org-wide repo defaults (and org rulesets) | `.github/safe-settings/organizations/<org>/settings.yml` |
+| Per-repository overrides | `.github/safe-settings/organizations/<org>/repos/<repo>.yml` |
+| Sub-org (repo group) settings | `.github/safe-settings/organizations/<org>/suborgs/<suborg>.yml` |
+| Global sync manifest (targets & merge strategy) | `.github/safe-settings/globals/manifest.yml` |
+
+Precedence is **repo > suborg > org**. See [Configuration structure](#1-configuration-structure) for the full walkthrough.
+
+### Access Control — who can do what
+
+Access-control governance lives in two layers.
+
+**Enforced** — applied by Safe-Settings / GitHub, and stored inside the Safe-Settings config above:
+
+| Control | Where |
+|---|---|
+| Required PR reviews & approvals | `require_pull_request_reviews` / `required_approving_review_count` in the org or per-repo settings (e.g. `.github/safe-settings/organizations/fabrice-org/repos/domain-repo-synced-prs.yml`) |
+| Branch protection & org rulesets | `rulesets` / protection keys in `.github/safe-settings/organizations/<org>/settings.yml` |
+| Code-owner review routing | `.github/CODEOWNERS` |
+
+**Documented baselines** — human-readable policy describing the target state. These are reference docs and are **not** auto-applied:
+
+| Document | Purpose |
+|---|---|
+| `policy/branch-protection-baseline.md` | Required branch-protection baseline for `main` |
+| `policy/reviewer-matrix.md` | Maps file areas to required approver teams |
+| `rulesets/demo-ruleset-baseline.md` | Intended org ruleset behavior |
+| `policy/domain-repo-policy.md` | What domain repos own vs. what is governed centrally |
+| `policy/template-versioning-policy.md` | Versioning rules for governed templates |
+| `sync-manifests/domain-repo-pins.yml` | Governance files pinned for rollout to downstream repos |
+
+> Editing a `policy/` or `rulesets/` document records **intent** only. To change what GitHub actually enforces, update the Safe-Settings YAML under `.github/safe-settings/` and merge to the default branch (or run `npm run full-sync`).
+
+> **Tip:** New here? Start with **Quick Start** and **Run Locally** just below. The longer, more advanced reference sections further down are collapsed into expandable dropdowns — open the ones you need.
 
 ## 🛡️ GitHub Safe-Settings
 
@@ -253,6 +297,9 @@ For very large diffs the comment is split across multiple comments, and the chec
 
 ### Suborg re-evaluation after repo-level changes
 
+<details>
+<summary><strong>How suborg membership is re-evaluated after repo changes (loop guards and depth cap)</strong></summary>
+
 A repo's suborg membership can depend on state that is itself written by `safe-settings`:
 
 - `suborgteams` — repos belong to a suborg because a given team is granted access
@@ -271,6 +318,8 @@ To handle this, after applying a repo-yml change `safe-settings` re-evaluates th
 2. **Hard depth cap (safety net):** Each repo is re-evaluated at most `MAX_REEVALUATION_DEPTH = 1` time per sync. This resolves the dominant single-hop case (repo change → suborg membership changed → apply the corrected suborg overlay once) while preventing pathological chains (suborg A applies a team that activates suborg B that activates suborg C…). Chains beyond one hop are resolved on the next sync event, and a warning is logged when the cap is hit.
 
 **Trigger optimization.** Re-evaluation is skipped entirely when the applied repo change did not affect `teams`, `custom_properties`, repository creation, or repository rename state — these are the repo-level changes that can affect suborg matching.
+
+</details>
 
 ### Use `safe-settings` to rename repos
 If you rename a `<repo.yml>` that corresponds to a repo, safe-settings will rename the repo to the new name. This behavior will take effect whether the env variable `BLOCK_REPO_RENAME_BY_HUMAN` is set or not.
@@ -312,6 +361,9 @@ By default, if no configuration file is provided, `safe-settings` will excludes 
 See our [deployment-settings.yml sample](docs/sample-settings/sample-deployment-settings.yml).
 
 ### Custom rules
+
+<details>
+<summary><strong>Custom config and override validators (for example, block admin collaborators)</strong></summary>
 
 Admins setting up `safe-settings` can include custom rules that would be validated before applying a setting or overriding a broader scoped setting.
 
@@ -358,7 +410,13 @@ overridevalidators:
 
 A sample of `deployment-settings` file is found [here](docs/sample-settings/sample-deployment-settings.yml).
 
+</details>
+
 ### Custom Status Checks
+
+<details>
+<summary><strong>Allow externally-defined status checks, and reference bypass actors/reviewers by name</strong></summary>
+
 For branch protection rules and rulesets, you can allow for status checks to be defined outside of safe-settings together with your usual safe settings.
 
 This can be defined at the org, sub-org, and repo level.
@@ -452,7 +510,13 @@ Notes:
 #### Status checks inheritance across scopes
 Refer to [Status checks](docs/status-checks.md).
 
+</details>
+
 ### Performance
+
+<details>
+<summary><strong>How safe-settings stays efficient across thousands of repos and diffs against GitHub</strong></summary>
+
 When there are 1000s of repos to be managed -- and there is a global settings change -- safe-settings will have to work efficiently and only make the necessary API calls.
 
 The app also has to complete the work within an hour: the lifetime of the GitHub app token.
@@ -563,6 +627,9 @@ the results of comparison would be:
       "hasChanges": true
     }
 ```
+
+</details>
+
 ### Schedule
 The App can be configured to apply the settings on a schedule. This could be a way to address configuration drift since webhooks are not always guaranteed to be delivered.
 
@@ -600,6 +667,9 @@ And the `checkrun` page will look like this:
 </p>
 
 ### Disabling plugins (`disable_plugins`)
+
+<details>
+<summary><strong>Turn plugins off per scope with disable_plugins (strip matrix, cascade rules, examples)</strong></summary>
 
 Any settings file (deployment-settings, org `settings.yml`, suborg, or repo) can
 contain a top-level `disable_plugins` list to turn off one or more safe-settings
@@ -675,7 +745,12 @@ disable_plugins:
     target: all
 ```
 
+</details>
+
 ### Additive plugins (`additive_plugins`)
+
+<details>
+<summary><strong>Additive soft mode — add and update only, never delete changes made outside safe-settings</strong></summary>
 
 `additive_plugins` is the complementary "soft mode" to `disable_plugins`. When a
 Diffable plugin is listed here, safe-settings will only **add** and **update**
@@ -718,6 +793,8 @@ additive_plugins:
   - labels
   - collaborators
 ```
+
+</details>
 
 ### The Settings Files
 
@@ -843,6 +920,9 @@ You can pass environment variables; the easiest way to do it is via a `.env` fil
 
 ## Smoke Testing
 
+<details>
+<summary><strong>End-to-end smoke test (smoke-test.js): prerequisites, auth, phases, and how to run it</strong></summary>
+
 The repository includes an end-to-end smoke test script (`smoke-test.js`) that validates safe-settings against a live GitHub organization. It starts the app, creates repos/configs via the API, and verifies that safe-settings correctly applies and enforces settings.
 
 ### Prerequisites
@@ -937,8 +1017,12 @@ The script uses colored terminal output with pass (✅) / fail (❌) indicators 
 ══════════════════════════════════════
 ```
 
+</details>
 
 ## Generating settings from existing configuration
+
+<details>
+<summary><strong>Reverse-generate YAML from existing repos/orgs, via CLI or repository_dispatch</strong></summary>
 
 Safe-settings normally works "forward": you declare settings in YAML and it applies them to GitHub. The **settings generator** does the reverse — it reads the *current* state of a repo, an org, or a collection of repos (a suborg) and produces the corresponding safe-settings YAML (`repos/<name>.yml`, `settings.yml`, or `suborgs/<name>.yml`). This is useful for onboarding existing repositories/orgs onto safe-settings without hand-authoring config.
 
@@ -1051,6 +1135,7 @@ This means it is safe to give developers write access to the admin repo so they 
 
 To enforce review, protect the admin repo's default branch (for example, require pull request reviews and disallow direct pushes). Because the generator only ever writes to a feature branch and opens a PR, those rules apply to every generated change.
 
+</details>
 
 ## License
 
