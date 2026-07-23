@@ -1563,4 +1563,70 @@ repository:
       expect(result).toEqual([])
     })
   })
+
+  // ────────────────────────────────────────────────────────────────────────
+  // rename contamination (concurrent updateRepos)
+  //
+  // updateRepos stamps each repo's own name/org onto the repository config
+  // before handing it to the Repository plugin. Repos are processed
+  // concurrently (Promise.all in eachRepositoryRepos), so mutating the shared
+  // `this.config.repository` object in place leaks one repo's name into another
+  // between the archive-getState await and the Repository plugin construction —
+  // producing spurious 422 renames. These tests pin the cloned, non-mutating
+  // behaviour.
+  // ────────────────────────────────────────────────────────────────────────
+  describe('rename contamination', () => {
+    const Archive = require('../../../lib/plugins/archive')
+    let savedRepositoryPlugin
+    let getStateSpy
+    let seenNames
+
+    beforeEach(() => {
+      seenNames = {}
+      savedRepositoryPlugin = Settings.PLUGINS.repository
+      // Capture the `name` each Repository plugin instance is constructed with.
+      Settings.PLUGINS.repository = jest.fn().mockImplementation((nop, github, repo, config) => {
+        seenNames[repo.repo] = config && config.name
+        return { sync: () => Promise.resolve([]), renamed: false, created: false }
+      })
+      // Archive.getState is the await point between the name stamp and the
+      // Repository plugin construction; keep it async so concurrent updateRepos
+      // calls interleave there (this is what surfaced the original bug).
+      getStateSpy = jest.spyOn(Archive.prototype, 'getState')
+        .mockResolvedValue({ shouldArchive: false, shouldUnarchive: false })
+    })
+
+    afterEach(() => {
+      Settings.PLUGINS.repository = savedRepositoryPlugin
+      getStateSpy.mockRestore()
+    })
+
+    // No suborg arg: leaves subOrgConfigMap unset so updateRepos actually
+    // processes the repo instead of skipping it.
+    function makeSettings () {
+      const settings = new Settings(false, stubContext, mockRepo, { repository: { topics: ['x'] } }, mockRef)
+      settings.subOrgConfigs = {}
+      settings.repoConfigs = {}
+      jest.spyOn(settings, 'childPluginsList').mockReturnValue([])
+      return settings
+    }
+
+    it('does not leak one repo name into another when repos sync concurrently', async () => {
+      const settings = makeSettings()
+      await Promise.all([
+        settings.updateRepos({ owner: 'o', repo: 'repo-a' }),
+        settings.updateRepos({ owner: 'o', repo: 'repo-b' })
+      ])
+      expect(seenNames['repo-a']).toBe('repo-a')
+      expect(seenNames['repo-b']).toBe('repo-b')
+    })
+
+    it('does not mutate the shared config.repository object', async () => {
+      const settings = makeSettings()
+      await settings.updateRepos({ owner: 'o', repo: 'repo-a' })
+      expect(settings.config.repository.name).toBeUndefined()
+      expect(settings.config.repository.org).toBeUndefined()
+      expect(seenNames['repo-a']).toBe('repo-a')
+    })
+  })
 }) // Settings Tests
