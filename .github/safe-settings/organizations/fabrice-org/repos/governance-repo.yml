@@ -1,0 +1,27 @@
+# Repo-level Safe-Settings policy for the governance-repo admin repository.
+#
+# Applied on top of the org-level defaults in ../settings.yml. It declares the
+# repository rulesets that Safe-Settings manages for this repo.
+#
+# NOTE: Safe-Settings reconciles the full set of repository rulesets. Any
+# repository ruleset that is not declared here is removed on the next sync.
+rulesets:
+  # Automatically request a GitHub Copilot code review on every pull request
+  # that targets the default branch. Copilot is added as a reviewer and leaves
+  # advisory comments; on its own it does not block merges.
+  - name: copilot-code-review
+    target: branch
+    enforcement: active
+    conditions:
+      ref_name:
+        include:
+          - "~DEFAULT_BRANCH"
+        exclude: []
+    rules:
+      - type: copilot_code_review
+        parameters:
+          # Leave draft PRs alone until they are marked ready for review.
+          review_draft_pull_requests: false
+          # Review the initial pull request only, not every subsequent push,
+          # to keep Copilot premium-request usage predictable.
+          review_on_push: false
