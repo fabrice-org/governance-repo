@@ -5,7 +5,7 @@ repository:
   description: To demo governance such as safe settings
 
   # Whether the repository is private
-  private: false
+  private: true
 
   # Whether issues are enabled
   has_issues: true
