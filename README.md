@@ -1,5 +1,47 @@
 # Governance Repo
-This governance repo can be used by enterprises to manage governance accross multiple repos. It currently contains Safe Seeting and Github Issues Template access governance.
+This governance repo can be used by enterprises to manage governance across multiple repos. It currently manages two domains: **Safe Settings** (repository and organization configuration) and **Access Control** (branch protection, required reviews, and review-ownership policy). The **Governance Layout** section below shows where each configuration lives.
+
+## 🗂️ Governance Layout
+
+Both domains are version-controlled here and changed through pull requests, but they are applied differently. The Safe-Settings app reads this repo (`ADMIN_REPO=governance-repo`) for the `fabrice-org` organization, rooted at `CONFIG_PATH=.github/safe-settings/organizations/fabrice-org`.
+
+### Safe Settings — repository & org configuration
+
+Repository and organization settings that the Safe-Settings GitHub App applies automatically (on merge to the default branch, and on demand via `npm run full-sync`).
+
+| What | Where |
+|---|---|
+| Org-wide repo defaults (and org rulesets) | `.github/safe-settings/organizations/<org>/settings.yml` |
+| Per-repository overrides | `.github/safe-settings/organizations/<org>/repos/<repo>.yml` |
+| Sub-org (repo group) settings | `.github/safe-settings/organizations/<org>/suborgs/<suborg>.yml` |
+| Global sync manifest (targets & merge strategy) | `.github/safe-settings/globals/manifest.yml` |
+
+Precedence is **repo > suborg > org**. See [Configuration structure](#1-configuration-structure) for the full walkthrough.
+
+### Access Control — who can do what
+
+Access-control governance lives in two layers.
+
+**Enforced** — applied by Safe-Settings / GitHub, and stored inside the Safe-Settings config above:
+
+| Control | Where |
+|---|---|
+| Required PR reviews & approvals | `require_pull_request_reviews` / `required_approving_review_count` in the org or per-repo settings (e.g. `.github/safe-settings/organizations/fabrice-org/repos/domain-repo-synced-prs.yml`) |
+| Branch protection & org rulesets | `rulesets` / protection keys in `.github/safe-settings/organizations/<org>/settings.yml` |
+| Code-owner review routing | `.github/CODEOWNERS` |
+
+**Documented baselines** — human-readable policy describing the target state. These are reference docs and are **not** auto-applied:
+
+| Document | Purpose |
+|---|---|
+| `policy/branch-protection-baseline.md` | Required branch-protection baseline for `main` |
+| `policy/reviewer-matrix.md` | Maps file areas to required approver teams |
+| `rulesets/demo-ruleset-baseline.md` | Intended org ruleset behavior |
+| `policy/domain-repo-policy.md` | What domain repos own vs. what is governed centrally |
+| `policy/template-versioning-policy.md` | Versioning rules for governed templates |
+| `sync-manifests/domain-repo-pins.yml` | Governance files pinned for rollout to downstream repos |
+
+> Editing a `policy/` or `rulesets/` document records **intent** only. To change what GitHub actually enforces, update the Safe-Settings YAML under `.github/safe-settings/` and merge to the default branch (or run `npm run full-sync`).
 
 ## 🛡️ GitHub Safe-Settings
 
