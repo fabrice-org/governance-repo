@@ -1,3 +1,13 @@
+// Load environment variables from a local .env when run directly via `node`
+// (e.g. `npm run full-sync`). The `probot run` CLI used by `npm start`/`npm run dev`
+// calls dotenv.config() itself; doing it here makes this entrypoint behave the same.
+// This is a no-op in deployed environments where real env vars are set and no .env exists.
+try {
+  require('dotenv').config()
+} catch (err) {
+  // dotenv is an optional convenience for local runs; ignore if it is unavailable
+}
+
 const appFn = require('./')
 const { FULL_SYNC_NOP } = require('./lib/env')
 const { createProbot } = require('probot')
