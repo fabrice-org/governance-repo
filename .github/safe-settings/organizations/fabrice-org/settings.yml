@@ -2,7 +2,7 @@
 
 repository:
   # A short description of the repository
-  description: to test safe settings
+  description: To demo governance such as safe settings
 
   # Whether the repository is private
   private: false
@@ -15,9 +15,6 @@ repository:
 
   # Whether the wiki is enabled
   has_wiki: true
-
-  # Whether downloads are enabled
-  has_downloads: true
 
   # Updates the default branch for this repository
   default_branch: main

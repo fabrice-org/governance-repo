@@ -1,6 +1,6 @@
 repository:
   # A short description of the repository that will show up on GitHub
-  description: managed by safe-settings hub-sync test
+  description: Demo repository managed by safe-settings
 
   # Whether issues are enabled
   has_issues: true
@@ -9,4 +9,9 @@ repository:
   has_projects: true
 
   # Whether the wiki is enabled
-  has_wiki: false
+  has_wiki: true
+
+  # require pull request reviews before merging
+  require_pull_request_reviews: true
+  # Number of required approving reviews before merging
+  required_approving_review_count: 1
